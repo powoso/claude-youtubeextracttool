@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}YT Learn{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50:'#fef2f2', 100:'#fee2e2', 200:'#fecaca', 300:'#fca5a5', 400:'#f87171', 500:'#ef4444', 600:'#dc2626', 700:'#b91c1c', 800:'#991b1b', 900:'#7f1d1d' },
+            surface: { 50:'#f8fafc', 100:'#f1f5f9', 200:'#e2e8f0', 300:'#cbd5e1' },
+          },
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* Smooth transitions */
+    * { transition-property: color, background-color, border-color, box-shadow, opacity, transform; transition-duration: 150ms; }
+    /* Card flip */
+    .flip-card { perspective: 1000px; }
+    .flip-card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; }
+    .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+    .flip-card-front, .flip-card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 1rem; }
+    .flip-card-back { transform: rotateY(180deg); }
+    /* Pulse animation */
+    @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
+    .pulse-dot { animation: pulse-dot 1.4s ease-in-out infinite; }
+    .pulse-dot:nth-child(2) { animation-delay: .2s; }
+    .pulse-dot:nth-child(3) { animation-delay: .4s; }
+    /* Tab underline */
+    .tab-active { border-bottom: 3px solid #ef4444; color: #ef4444; font-weight: 600; }
+    /* Fade in */
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-up { animation: fadeUp .4s ease-out forwards; }
+  </style>
+</head>
+<body class="h-full bg-surface-50 font-sans text-gray-800 antialiased">
+
+  <!-- Nav -->
+  <nav class="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-surface-200">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2 group">
+        <div class="w-9 h-9 bg-brand-500 rounded-xl flex items-center justify-center shadow-md shadow-brand-200 group-hover:shadow-lg group-hover:shadow-brand-300 group-hover:scale-105">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <span class="text-lg font-bold text-gray-900">YT Learn</span>
+      </a>
+      <div class="flex items-center gap-1">
+        <a href="/" class="px-4 py-2 text-sm font-medium rounded-lg hover:bg-surface-100 {% if request.endpoint == 'index' %}text-brand-600 bg-brand-50{% else %}text-gray-600{% endif %}">Extract</a>
+        <a href="/library" class="px-4 py-2 text-sm font-medium rounded-lg hover:bg-surface-100 {% if request.endpoint == 'library' %}text-brand-600 bg-brand-50{% else %}text-gray-600{% endif %}">Library</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Content -->
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}Flashcards — {{ v.title }}{% endblock %}
+
+{% block content %}
+<div class="min-h-[70vh] flex flex-col items-center fade-up">
+
+  <!-- Back link -->
+  <div class="w-full max-w-2xl mb-6">
+    <a href="/result/{{ v.video_id }}" class="text-sm text-gray-500 hover:text-brand-500 inline-flex items-center gap-1">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+      Back to {{ v.title }}
+    </a>
+  </div>
+
+  <!-- Card area -->
+  <div class="w-full max-w-2xl">
+
+    <!-- Progress -->
+    <div class="flex items-center justify-between mb-6">
+      <span class="text-sm font-medium text-gray-500">Card <span id="card-num">1</span> of {{ v.flashcards | length }}</span>
+      <div class="flex items-center gap-3">
+        <span id="score-display" class="text-sm text-gray-400"></span>
+        <div class="flex gap-1" id="dots">
+          {% for fc in v.flashcards %}
+          <div class="w-2.5 h-2.5 rounded-full bg-surface-300" data-dot="{{ loop.index0 }}"></div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="w-full h-1.5 bg-surface-200 rounded-full mb-8 overflow-hidden">
+      <div id="progress-bar" class="h-full bg-brand-500 rounded-full" style="width: {{ (1 / v.flashcards|length * 100) if v.flashcards else 0 }}%; transition: width 0.4s ease;"></div>
+    </div>
+
+    <!-- Flip card -->
+    <div class="flip-card w-full h-72 sm:h-80 cursor-pointer mb-8" id="flip-card" onclick="flipCard()">
+      <div class="flip-card-inner">
+        <!-- Front (Question) -->
+        <div class="flip-card-front bg-white border border-surface-200 shadow-lg rounded-2xl flex flex-col items-center justify-center p-8 text-center">
+          <span class="text-xs font-semibold text-brand-400 uppercase tracking-wider mb-4">Question</span>
+          <p id="card-question" class="text-xl sm:text-2xl font-semibold text-gray-900 leading-snug">{{ v.flashcards[0].question if v.flashcards else '' }}</p>
+          <span class="text-xs text-gray-400 mt-6">Click to reveal</span>
+        </div>
+        <!-- Back (Answer) -->
+        <div class="flip-card-back bg-gradient-to-br from-brand-500 to-brand-700 shadow-lg rounded-2xl flex flex-col items-center justify-center p-8 text-center">
+          <span class="text-xs font-semibold text-brand-200 uppercase tracking-wider mb-4">Answer</span>
+          <p id="card-answer" class="text-xl sm:text-2xl font-semibold text-white leading-snug">{{ v.flashcards[0].answer if v.flashcards else '' }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="flex items-center justify-center gap-4">
+      <button onclick="markCard('wrong')" class="flex items-center gap-2 px-6 py-3 bg-white border border-red-200 text-red-600 font-semibold rounded-xl hover:bg-red-50 shadow-sm">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        Didn't know
+      </button>
+      <button onclick="markCard('right')" class="flex items-center gap-2 px-6 py-3 bg-emerald-500 text-white font-semibold rounded-xl hover:bg-emerald-600 shadow-md shadow-emerald-200">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        Got it!
+      </button>
+    </div>
+
+    <!-- Keyboard hint -->
+    <p class="text-center text-xs text-gray-400 mt-6">Space to flip &middot; &larr; Didn't know &middot; &rarr; Got it</p>
+  </div>
+
+  <!-- Completion screen (hidden) -->
+  <div id="complete-screen" class="hidden w-full max-w-2xl text-center py-12">
+    <div class="w-20 h-20 mx-auto mb-6 bg-emerald-100 rounded-full flex items-center justify-center">
+      <svg class="w-10 h-10 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    </div>
+    <h2 class="text-2xl font-bold text-gray-900 mb-2">Session complete!</h2>
+    <p id="final-score" class="text-lg text-gray-500 mb-6"></p>
+    <div class="flex items-center justify-center gap-3">
+      <button onclick="resetCards()" class="px-5 py-2.5 bg-brand-500 text-white font-semibold rounded-xl hover:bg-brand-600 shadow-md shadow-brand-200">Study Again</button>
+      <a href="/result/{{ v.video_id }}" class="px-5 py-2.5 bg-white border border-surface-300 text-gray-700 font-medium rounded-xl hover:bg-surface-100">Back to Notes</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const cards = {{ v.flashcards | tojson }};
+let idx = 0, correct = 0, flipped = false;
+
+function flipCard() {
+  flipped = !flipped;
+  document.getElementById('flip-card').classList.toggle('flipped', flipped);
+}
+
+function showCard(i) {
+  if (i >= cards.length) {
+    document.getElementById('flip-card').parentElement.parentElement.querySelector('.flex.items-center.justify-center.gap-4').classList.add('hidden');
+    document.getElementById('flip-card').classList.add('hidden');
+    document.querySelector('.flex.items-center.justify-between.mb-6').classList.add('hidden');
+    document.querySelector('.w-full.h-1\\.5').classList.add('hidden');
+    document.querySelector('.text-center.text-xs.text-gray-400.mt-6').classList.add('hidden');
+    const screen = document.getElementById('complete-screen');
+    screen.classList.remove('hidden');
+    document.getElementById('final-score').textContent = `You got ${correct} out of ${cards.length} correct (${Math.round(correct/cards.length*100)}%)`;
+    return;
+  }
+  flipped = false;
+  document.getElementById('flip-card').classList.remove('flipped');
+  document.getElementById('card-question').textContent = cards[i].question;
+  document.getElementById('card-answer').textContent = cards[i].answer;
+  document.getElementById('card-num').textContent = i + 1;
+  document.getElementById('progress-bar').style.width = ((i + 1) / cards.length * 100) + '%';
+  document.getElementById('score-display').textContent = correct + ' correct';
+}
+
+function markCard(result) {
+  const dot = document.querySelector(`[data-dot="${idx}"]`);
+  if (result === 'right') {
+    correct++;
+    dot.classList.remove('bg-surface-300');
+    dot.classList.add('bg-emerald-500');
+  } else {
+    dot.classList.remove('bg-surface-300');
+    dot.classList.add('bg-red-400');
+  }
+  idx++;
+  showCard(idx);
+}
+
+function resetCards() {
+  idx = 0; correct = 0; flipped = false;
+  document.querySelectorAll('[data-dot]').forEach(d => { d.classList.remove('bg-emerald-500', 'bg-red-400'); d.classList.add('bg-surface-300'); });
+  document.getElementById('flip-card').classList.remove('hidden', 'flipped');
+  document.getElementById('flip-card').parentElement.parentElement.querySelector('.flex.items-center.justify-center.gap-4').classList.remove('hidden');
+  document.querySelector('.flex.items-center.justify-between.mb-6').classList.remove('hidden');
+  document.querySelector('.w-full.h-1\\.5').classList.remove('hidden');
+  document.querySelector('.text-center.text-xs.text-gray-400.mt-6').classList.remove('hidden');
+  document.getElementById('complete-screen').classList.add('hidden');
+  showCard(0);
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space') { e.preventDefault(); flipCard(); }
+  if (e.code === 'ArrowRight') markCard('right');
+  if (e.code === 'ArrowLeft') markCard('wrong');
+});
+</script>
+{% endblock %}

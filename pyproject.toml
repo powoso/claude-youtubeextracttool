@@ -11,6 +11,7 @@ dependencies = [
     "youtube-transcript-api>=0.6.1",
     "anthropic>=0.39.0",
     "click>=8.1.7",
+    "flask>=3.0.0",
 ]
 
 [project.scripts]

@@ -161,5 +161,17 @@ def export(video_id: str, output: str) -> None:
     click.echo(f"Exported to {output}")
 
 
+@cli.command()
+@click.option("--host", "-h", default="127.0.0.1", help="Host to bind to.")
+@click.option("--port", "-p", default=5000, type=int, help="Port to listen on.")
+@click.option("--debug", is_flag=True, help="Enable debug mode.")
+def web(host: str, port: int, debug: bool) -> None:
+    """Launch the web interface."""
+    from .webapp import run_server
+
+    click.echo(f"Starting YT Learn web app at http://{host}:{port}")
+    run_server(host=host, port=port, debug=debug)
+
+
 if __name__ == "__main__":
     cli()
